@@ -19,10 +19,17 @@ class YoloLoss(nn.modules.loss._Loss):
         self.bce_loss = nn.BCELoss()
 
 
-    def forward(self, output, target, scaled_anchors, stride):
+    def forward(self, output, dim_info, target, scaled_anchors, stride):
+
+        # print(output.shape)
+        # torch.Size([8, 3, 13, 13, 85])
+        # print(target.shape)
+        # torch.Size([6])
 
         pred_boxes = output[..., :4] / stride
+        pred_conf = output[..., 4]
         pred_cls = output[..., 5:]
+        x, y, w, h = dim_info[..., 0], dim_info[..., 1], dim_info[..., 2], dim_info[..., 3]
 
         iou_scores, class_mask, obj_mask, noobj_mask, tx, ty, tw, th, tcls, tconf = utils.build_targets(
             pred_boxes = pred_boxes,

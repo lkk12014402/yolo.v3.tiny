@@ -37,7 +37,7 @@ if __name__ == '__main__':
 
     if args.weights_path is not None:
         # Load darknet weights
-        model.load_weights(args.weights_path)
+        model.load_darknet_weights(args.weights_path)
         
     model.eval()  # Set in evaluation mode
 
@@ -50,7 +50,6 @@ if __name__ == '__main__':
 
     if not os.path.exists(args.output_path):
         os.makedirs(args.output_path)
-
 
     if not os.path.exists(args.image_folder):
         print ('No file or directory with the name {}'.format(args.image_folder))
