@@ -285,7 +285,7 @@ def get_batch_statistics(outputs, targets, iou_thresh):
                 if iou >= iou_thresh and box_index not in detected_boxes:
                     true_positives[pred_i] = 1
                     detected_boxes += [box_index]
-        batch_metrics.append([true_positives, pred_scores, pred_labels])
+        batch_metrics.append([true_positives, pred_scores.cpu(), pred_labels.cpu()])
 
     return batch_metrics
 

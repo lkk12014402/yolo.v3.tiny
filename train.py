@@ -1,4 +1,4 @@
-
+import pdb
 import os
 import time
 import datetime
@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epochs', type=int, default=100, help='number of epochs')
+    parser.add_argument('--epochs', type=int, default=2, help='number of epochs')
     parser.add_argument('--batch_size', type=int, default=16, help='size of each image batch')
     parser.add_argument('--gradient_accumulations', type=int, default=2, help='number of gradient accums before step')
     parser.add_argument('--data_config', type=str, default='config/voc.data', help='path to data config file')
@@ -57,7 +57,7 @@ if __name__ == '__main__':
 
     # Get dataloader
     train_dataset = VOCDetection(args.train_path, args.img_size)
-    train_loader  = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers, 
+    train_loader  = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers,
                                collate_fn=train_dataset.collate_fn)
     val_dataset = VOCDetection(args.val_path, args.img_size)
     val_loader  = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, 
@@ -71,37 +71,36 @@ if __name__ == '__main__':
 
     for epoch in range(args.epochs):
 
-        model.train()
-        start_time = time.time()
+        # model.train()
+        # start_time = time.time()
 
-        for ind, (imgs, targets) in enumerate(train_loader):
+        # for ind, (imgs, targets) in enumerate(train_loader):
+        #     print(ind, imgs.shape)
+        #     batches_done = len(train_loader) * epoch + ind
 
-            batches_done = len(train_loader) * epoch + ind
+        #     imgs = imgs.to(device)
+        #     targets = targets.to(device)
 
-            imgs = imgs.to(device)
-            targets = targets.to(device)
+        #     outputs, loss = model(imgs, targets)
+        #     loss.backward()
 
-            outputs, loss = model(imgs, targets)
-            loss.backward()
+        #     if batches_done % args.gradient_accumulations:
+        #         # Accumulates gradient before each step
+        #         optimizer.step()
+        #         optimizer.zero_grad()
 
-            if batches_done % args.gradient_accumulations:
-                # Accumulates gradient before each step
-                optimizer.step()
-                optimizer.zero_grad()
+        #     log_str = '\n---- [Epoch %d/%d, Batch %d/%d] ----\n' % (epoch+1, args.epochs, ind+1, len(train_loader))
+        #     log_str += '\nTotal loss %.3f' % (loss.item())
 
-            log_str = '\n---- [Epoch %d/%d, Batch %d/%d] ----\n' % (epoch+1, args.epochs, ind+1, len(train_loader))
-            log_str += '\nTotal loss %.3f' % (loss.item())
+        #     # Determine approximate time left for epoch
+        #     # epoch_batches_left = len(train_loader) - (ind + 1)
+        #     # time_left = datetime.timedelta(seconds=epoch_batches_left * (time.time() - start_time) / (ind + 1))
+        #     # log_str += '\n---- ETA {time_left}'
+        # print(log_str)
+        # epoch_time = time.time() - start_time
+        # print('Training time of epoch %d is %.2f' % (epoch, epoch_time))
 
-            # Determine approximate time left for epoch
-            # epoch_batches_left = len(train_loader) - (ind + 1)
-            # time_left = datetime.timedelta(seconds=epoch_batches_left * (time.time() - start_time) / (ind + 1))
-            # log_str += '\n---- ETA {time_left}'
-            print(log_str)
-
-        epoch_time = time.time() - start_time
-        print('Training time of epoch %d is %.2f' % (epoch, epoch_time))
-
-        if epoch % args.evaluation_interval == 0 and epoch > 20:
+        if epoch % args.evaluation_interval == 0 and epoch > -1:
             print('\n---- Evaluating Model ----')
             # Evaluate the model on the validation set
             model.eval()
@@ -114,8 +113,6 @@ if __name__ == '__main__':
                 imgs = imgs.to(device)
                 targets = targets.to(device)
 
-                # print()
-                # print(targets)
                 # Extract labels
                 labels += targets[:, 1].tolist()
                 # Rescale target
@@ -127,7 +124,7 @@ if __name__ == '__main__':
                     outputs = utils.non_max_suppression(outputs, conf_thresh=args.conf_thresh, nms_thresh=args.nms_thresh)
 
                 sample_metrics += utils.get_batch_statistics(outputs, targets, iou_thresh=args.map_thresh)
-            
+
             if len(sample_metrics) == 0:
                 print('---- mAP is NULL')
             else:
@@ -137,7 +134,6 @@ if __name__ == '__main__':
                 print('---- mAP %.3f' % (AP.mean()))
 
         if epoch % args.checkpoint_interval == 0 and epoch > 20:
-            torch.save(model.state_dict(), 'checkpoints/yolov3_tiny_ckpt_%d.pth' % epoch)
-
+            torch.save(model.state_dict(), os.path.join(args.output_path, 'yolov3_tiny_ckpt_%d.pth' % epoch))
 
         scheduler.step()

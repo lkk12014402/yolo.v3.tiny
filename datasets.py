@@ -58,9 +58,8 @@ class VOCDetection(Dataset):
         
         self.img_size = img_size
 
-        with open(list_path, "r") as file:
+        with open(list_path, "r") as file:  
             self.img_files = file.readlines()
-
         self.label_files = [path.replace("JPEGImages", "labels").replace(".png", ".txt").replace(".jpg", ".txt")
                             for path in self.img_files]
 
@@ -78,9 +77,11 @@ class VOCDetection(Dataset):
 
         # load label
         label_path = self.label_files[index % len(self.img_files)].strip()
+        assert np.loadtxt(label_path) is not None
         boxes = torch.from_numpy(np.loadtxt(label_path).reshape(-1, 5))
 
         img, boxes = letterbox(img, boxes, self.img_size)
+
         return img, boxes
 
     def collate_fn(self, batch):
@@ -101,8 +102,9 @@ class VOCDetection(Dataset):
 if __name__ == '__main__':
     
     train_dataset = VOCDetection('2012_val.txt')
-    train_loader = DataLoader(train_dataset, batch_size=8, shuffle=False, collate_fn=train_dataset.collate_fn)
+    train_loader = DataLoader(train_dataset, batch_size=1, shuffle=False, collate_fn=train_dataset.collate_fn)
 
-    for i, (ims, targets) in enumerate(train_loader):
-        print(i)
-        print(ims.shape)
+    for n in range(10):
+        for i, (ims, targets) in enumerate(train_loader):
+            print(i)
+            # print(ims.shape)
